@@ -1,44 +1,66 @@
 #### Preamble ####
-# Purpose: Cleans the raw plane data recorded by two observers..... [...UPDATE THIS...]
-# Author: Rohan Alexander [...UPDATE THIS...]
-# Date: 6 April 2023 [...UPDATE THIS...]
-# Contact: rohan.alexander@utoronto.ca [...UPDATE THIS...]
-# License: MIT
-# Pre-requisites: [...UPDATE THIS...]
-# Any other information needed? [...UPDATE THIS...]
+# Purpose: Cleans the raw crime data to improve readability.
+# Author: Ricky Fung
+# Date: 23 January 2024
+# Contact: ricky.fung@mail.utoronto.ca
+# Pre-requisites: Run script "01-download_data.R" and install janitor package.
 
 #### Workspace setup ####
 library(tidyverse)
+library(janitor)
 
 #### Clean data ####
-raw_data <- read_csv("inputs/data/plane_data.csv")
+crime_raw_data <- read_csv("inputs/data/crime_raw_data.csv")
 
-cleaned_data <-
-  raw_data |>
-  janitor::clean_names() |>
-  select(wing_width_mm, wing_length_mm, flying_time_sec_first_timer) |>
-  filter(wing_width_mm != "caw") |>
-  mutate(
-    flying_time_sec_first_timer = if_else(flying_time_sec_first_timer == "1,35",
-                                   "1.35",
-                                   flying_time_sec_first_timer)
-  ) |>
-  mutate(wing_width_mm = if_else(wing_width_mm == "490",
-                                 "49",
-                                 wing_width_mm)) |>
-  mutate(wing_width_mm = if_else(wing_width_mm == "6",
-                                 "60",
-                                 wing_width_mm)) |>
-  mutate(
-    wing_width_mm = as.numeric(wing_width_mm),
-    wing_length_mm = as.numeric(wing_length_mm),
-    flying_time_sec_first_timer = as.numeric(flying_time_sec_first_timer)
-  ) |>
-  rename(flying_time = flying_time_sec_first_timer,
-         width = wing_width_mm,
-         length = wing_length_mm
-         ) |> 
-  tidyr::drop_na()
+# Clean column names
+crime_reports_cleaned <- clean_names(crime_raw_data)
 
+# Remove unused columns
+
+crime_reports_cleaned <- crime_reports_cleaned %>% 
+  
+  # Remove unused columns
+  select(`id`, `division`, `category`,`subtype`, `count`) %>% 
+  
+  # Remove unknown data
+  filter(!grepl("NSA", division, ignore.case = TRUE)) %>% 
+  
+  # Rename Columns
+  rename(`ID` = `id`, 
+         `crime_category` = `category`, 
+         `crime` = `subtype`,
+         `report_count` = `count`) %>% 
+  
+  # Rename offence_category entries and group similar categories
+  mutate(
+    crime_category = case_match(
+      crime_category,
+      "Crimes Against the Person" ~ "Personal Offense",
+      "Crimes Against Property" ~ "Property Offense",
+      "Controlled Drugs and Substances Act" ~ "Controlled Substances",
+      "Criminal Code Traffic" ~ "Traffic Violation",
+      "Other Criminal Code Violations" ~ "Other",
+      "Other Federal Statute Violations" ~ "Other")) %>% 
+  
+  # Rename crime entries and group similar crimes
+  mutate(
+    crime = case_match(
+      crime,
+      "Theft Over $5000" ~ "Theft",
+      "Auto Theft" ~ "Theft",
+      "Theft Under $5000" ~ "Theft",
+      "Break & Enter-Commercial" ~ "Break & Enter",
+      "Break & Enter-Apartment" ~ "Break & Enter",
+      "Break & Enter-Other" ~ "Break & Enter",
+      "Break & Enter-House" ~ "Break & Enter",
+      "Robbery-Other" ~ "Robbery",
+      "Robbery-Financial" ~ "Robbery",
+      "Fraud" ~ "Fraud",
+      "Assault" ~ "Assault",
+      "Attempt Murder" ~ "Attempt Murder",
+      "Sexual Violation" ~ "Sexual Violation",
+      "Other Criminal Violations - Offensive Weapons" ~ "Other",
+      "Other" ~ "Other"))
+  
 #### Save data ####
-write_csv(cleaned_data, "outputs/data/analysis_data.csv")
+write_csv(crime_reports_cleaned, "outputs/data/cleaned_crime_data.csv")
