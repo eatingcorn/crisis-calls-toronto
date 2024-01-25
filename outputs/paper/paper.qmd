@@ -1,0 +1,197 @@
+---
+title: "Escalating Crisis Calls in Toronto: An Analysis of Person's in Crisis During and After COVID-19"
+author: 
+  - Ricky Fung
+thanks: "Code and data are available at: https://github.com/eatingcorn/crisis-calls-toronto"
+date: today
+date-format: "D MMMM YYYY"
+abstract: "In this paper, the Toronto Police Service data on Persons Crisis Calls Attended was analyzed. This revealed significant flutuations during years 2020 to 2023, showing significant changes in number of Crisis Calls and Reasons for the Call. This period coincides with the concerns and lockdowns from the COVID-19 Pandemic. Recognization of these flucuations underscores the urgency for government implementations of crisis response strategies, allocation of resources, and continuous improvement of support systems."
+format: pdf
+number-sections: true
+bibliography: references.bib
+---
+
+```{r}
+#| echo: false
+#| warning: false
+#### Preamble ####
+
+# Purpose: xxx
+# Author: Ricky Fung
+# Date: January 23, 2024
+# Contact: ricky.fung@mail.utoronto.ca
+# Pre-requisites: Run the files "01-download_data.R" and "02-data_cleaning.R".
+```
+
+```{r}
+#| include: false
+#| warning: false
+#| message: false
+# install.packages("janitor")
+# install.packages("tidyverse")
+# install.packages("tidyverse")
+# install.packages("opendatatoronto")
+
+library(janitor)
+library(tidyverse)
+library(knitr)
+library(opendatatoronto)
+
+
+# read the cleaned_data
+cleaned_data <- read_csv(here::here("outputs/data/cleaned_call_data.csv"))
+```
+
+
+# Introduction
+
+The topic of mental health has always been a known issue many struggle with throughout the world. However, it has been popular practice to push through these problems to progress in life, with many not even knowing when or if they struggle with mental health. Over 450 million people worldwide currently struggle with mental illness and one in two Canadians have—or have had—a mental illness by the time they reach 40 years of age [@citeCamh]. Helplines have been advertised around Toronto to combat any arising crisis an individual may have, providing suicide intervention and emotional support. In addition, with the characterization of COVID-19 to be a pandemic in March 2020 [@citeWho], crisis call volumes peaked six weeks after the initial outbreak, at 35% above pre-pandemic levels, mainly driven by fear, loneliness, and, later in the pandemic, physical-health concerns [@citeNIH]. The high population density of Toronto can explain this as it is inevitable for individuals to be within close contact.
+
+In this paper, the analysis of "Persons Crisis Calls Attended" between the years 2014 and 2023 by the reason for the call and the caller's division (general area). Within this analysis, it was found that during and after COVID-19, significant changes were shown in the reason for the crisis call, the total number of crisis calls within the years of COVID-19, and the number of crisis calls in each division. By understanding the trends of crisis calls over the years, the call for government responsibility for the implementation of crisis response strategies, allocation of resources, and continuous improvement of support systems is crucial for those in need, especially within the constraints of a pandemic, to build more a resilient community.
+
+
+
+# Data {#sec-data}
+
+## Data Source {#sec-data-source}
+
+This paper utilizes data from persons in crisis calls in Toronto obtained from the Toronto Police Service Annual Statistic Report (ASR) [@citeDataset]. The analysis of crisis calls within this paper was obtained from the City of Toronto's Open Data Portal using the R package opendatatornto [@citeOpendatatoronto], the data set has dates up to December 31, 2023, and was last updated January 10, 2024.
+
+The R programming language [@citeR] and packages, tidyverse [@citeTidyverse], janitor [@citeJanitor], and [@citeknitr] were used to simulate, create data, display data, as well as clean the raw data set obtained from opendatatoronto [@citeOpendatatoronto] and test the cleaned data set.
+
+Persons In Crisis data set contains data which includes all Persons in Crisis calls for service attended from 2014 to 2023. Original data set contains over 290000 observations and includes attributes: id, OBJECTID, EVENT_ID, EVENT_DATE,	EVENT_YEAR, EVENT_MONTH,	EVENT_DOW, EVENT_HOUR, EVENT_TYPE,	DIVISION,	OCCURRENCE_CREATED,	APPREHENSION_MADE,	HOOD_158,	NEIGHBOURHOOD_158,	HOOD_140, NEIGHBOURHOOD_140. Most of the attributes are unused in this analysis and after the cleaning and tidying of data, the main variables used in the analysis are Year, Reason for Call, and Division as seen in @tbl-cleaned_data.
+
+```{r}
+#| message: false
+#| echo: false
+#| label: tbl-cleaned_data
+#| tbl-cap: Preview of Toronto Persons Crisis Calls Data
+
+head (cleaned_data, 8) |>
+  kable(
+    col.names = c("Year", "Reason for Call", "Division"),
+  booktabs = TRUE
+  )
+```
+
+# Results {#sec-data-results}
+
+```{r}
+#| echo: false
+#| eval: true
+#| warning: false
+#| message: false
+
+#### Load Dataset ####
+
+cleaned_call_data <- 
+  read_csv(file = here::here("outputs/data/cleaned_call_data.csv"))
+
+```
+
+
+```{r}
+#| echo: false
+#| warning: false
+
+#### First Table ####
+
+first_table <- cleaned_call_data %>%
+  group_by(Year) %>%
+  summarize(`Number of Calls` = n(), .groups = 'drop')
+
+#### Second Table ####
+
+second_table <- cleaned_call_data %>%
+  group_by(Year, `Reason for Call`) %>%
+  summarize(`Number of Calls` = n(), .groups = 'drop')
+
+#### Third Table ####
+
+third_table <- cleaned_call_data %>%
+  group_by(Division, `Year`) %>%
+  summarise(`Number of Calls` = n(), .groups = "drop")
+
+```
+
+
+```{r}
+#| echo: false
+#| warning: false
+#| label: fig-crisis-calls-by-year
+#| fig-cap: "Number of Crisis Calls In Toronto by Year"
+
+#### First Graph ####
+first_table$Year <- as.factor(first_table$Year)
+
+ggplot(first_table, aes(x =Year, y = `Number of Calls`)) +
+  geom_bar(stat = "identity", fill = "Orange") +
+  labs(x = "Year",
+       y = "Number of Calls") +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+@fig-crisis-calls-by-year, display's the total number of crisis calls of Person in Crisis, Overdose, and suicide related calls across the years 2014 to 2023. It depicts a consistent continuous growth in the number of crisis calls from 2014 to 2021, with the peak occurring in 2021 at 35 394 total calls. Subsequently, there was a decrease in crisis calls from 2021 to 2023.
+
+\newpage
+
+```{r}
+#| echo: false
+#| warning: false
+#| label: fig-calls-by-year-and-event
+#| fig-cap: "Number of Crisis Calls in Toronto by Year and Event Type"
+
+#### Second Graph ####
+
+second_table$Year <- as.factor(second_table$Year)
+
+ggplot(second_table, aes(x = Year, fill = `Reason for Call`, y = `Number of Calls`)) +
+  geom_dotplot(binaxis = "y", stackdir= "center", binpositions="all") +
+  labs(x = "Year",
+       fill = "Reason for Call",
+       y = "Number of Calls") +
+  theme(plot.title = element_text(face = "bold"))
+
+```
+
+@fig-calls-by-year-and-event illustrates steady increases in the number of calls related to Overdose, Person in Crisis, and Suicide in Toronto from 2014 to 2023. We also observe that Person in Crisis consistently leads in call volume across all years, followed by suicide-related calls, and Overdose with the fewest calls.
+
+
+\newpage
+
+```{r}
+#| echo: false
+#| warning: false
+#| label: fig-outbreaks-by-location-type
+#| fig-cap: "Number of Crisis calls in Toronto by Division and Year"
+
+#### Third Graph ####
+third_table$Year <- factor(third_table$Year)
+
+ggplot(third_table, aes(x = Year, fill = Division, y = `Number of Calls`)) +
+  geom_dotplot(binaxis = "y", stackdir = "center", binpositions = "all") +
+  labs(x = "Year",
+       fill = "Reason For Call",
+       y = "Number of Calls") +
+  theme(plot.title = element_text(face = "bold")) +
+  theme_bw() +
+  theme(legend.key.size = unit(0.4, "cm")) 
+
+```
+
+@fig-outbreaks-by-location-type highlights noticeable increases in crisis calls in police divisions in Toronto from the year 2014 to 2021, specifically "D14" and "D52" situated in the core of downtown Toronto, indicating a growing trend of crisis calls in the central urban area. However from 2021 to 2023, a significant decreases in calls was observed.
+
+\newpage
+
+# Discussion
+In @fig-outbreaks-by-location-type, and @fig-crisis-calls-by-year it was observed that there was a continuous growth of crisis calls in Toronto across the years 2014 to 2021 and a significant decrease from 2021 to 2023, with it peaking in 2021. In @fig-calls-by-year-and-event it observed a steady growth from 2014 to 2021 but had significant changes in 2020-2023.
+
+During the majority of 2021, many were restricted to combat the spread of COVID-19, with many individuals told to stay at home as much as possible. With the fear of infection, uncertain prognoses, and the imposition of restrictions this can result in emotional and psychological distress of individuals [@citeNIH2]. This is evident in large cities where close contact is inevitable. This is likely one reason locations near the core of downtown Toronto experienced a significant increase in crisis calls in 2021. Similarly, the assessment of COVID-19 being a pandemic in 2020, led a widespread fear, which likely resulted in the surge in crisis calls for the reason "Person in Crisis" during that year. An approximately 13% increase from 2019, as illustrated in @fig-calls-by-year-and-event. As things gradually return to normal in 2022-2023 with the distribution of second doses and boosters of COVID-19 vaccines, fear and concerns of the virus start to diminish, which is likely the cause of the reduction in crisis calls in Toronto illustrated in the three figures.
+
+
+\newpage
+
+
+# References
+
+
