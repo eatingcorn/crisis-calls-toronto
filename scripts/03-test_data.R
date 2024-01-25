@@ -17,8 +17,8 @@ cleaned_data <- read_csv("outputs/data/cleaned_call_data.csv")
 # Check if there are 16 different divisions
 cleaned_data$Division %>% unique() %>% length() == 17
 
-# Check if there are 5 different crime categories
-cleaned_data$`Type of Event` %>% unique() %>% length() == 3
+# Check if there are 3 different call reasons
+cleaned_data$`Reason for Call` %>% unique() %>% length() == 3
 
 # Check if minimum Year is 2014
 cleaned_data$Year %>% min() == 2014
@@ -27,9 +27,9 @@ cleaned_data$Year %>% min() == 2014
 cleaned_data$Year %>% max() == 2023
 
 # Check if data contains specific crimes
-cleaned_data$`Type of Event` %>% 
+cleaned_data$`Reason for Call` %>% 
   unique() %>% 
-  sort() == sort(c("Suicide-Related", "Overdose", "Person in Crisis"))
+  sort() == sort(c("Suicide-related", "Overdose", "Person in Crisis"))
 
 # Check if data contains specific divisions
 cleaned_data$Division %>% 
