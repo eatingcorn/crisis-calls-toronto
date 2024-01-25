@@ -41,7 +41,7 @@ simulated_data <-
 
 #### Test Simulated Data ####
 
-# Check if there are 16 different divisions
+# Check if there are 17 different divisions
 simulated_data$Division %>% unique() %>% length() == 17
 
 # Check if there are 3 different Call reasons

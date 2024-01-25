@@ -14,7 +14,7 @@ cleaned_data <- read_csv("outputs/data/cleaned_call_data.csv")
 
 #### Test data ####
 
-# Check if there are 16 different divisions
+# Check if there are 17 different divisions
 cleaned_data$Division %>% unique() %>% length() == 17
 
 # Check if there are 3 different call reasons
